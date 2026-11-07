@@ -86,6 +86,8 @@
   }
   .modal h3 { margin-bottom: 8px; }
   .modal p { color: var(--dim); margin-bottom: 16px; font-size: 0.9rem; }
+  .trueup { display: flex; gap: 8px; margin-bottom: 8px; }
+  .trueup input { flex: 1; background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 10px; border-radius: 8px; text-align: center; font-size: 1.1rem; }
 </style>
 </head>
 <body>
@@ -120,6 +122,7 @@
 
   <div class="row">
     <button class="btn sm" onclick="undo()">Undo</button>
+    <button class="btn sm" onclick="showTrueUp()">True Up</button>
   </div>
 
   <div class="footer">
@@ -137,6 +140,21 @@
       <div class="row">
         <button class="btn sm" onclick="closeModal()">Cancel</button>
         <button class="btn sm us" id="modalOk">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-bg" id="trueUpModal">
+    <div class="modal">
+      <h3>True Up Scores</h3>
+      <p>Set the exact scores if they got out of sync.</p>
+      <div class="trueup">
+        <input id="trueUs" type="number" min="0" value="0">
+        <input id="trueThem" type="number" min="0" value="0">
+      </div>
+      <div class="row">
+        <button class="btn sm" onclick="closeTrueUp()">Cancel</button>
+        <button class="btn sm us" onclick="applyTrueUp()">Apply</button>
       </div>
     </div>
   </div>
@@ -194,13 +212,28 @@ function point(side) {
 function undo() {
   if (!state.history.length) return;
   const last = state.history.pop();
-  if (last.includes('+1 Us') || last.includes(document.getElementById('usName').value || 'Us')) {
-    if (state.us > 0) state.us--;
-  } else if (last.includes('+1 Them') || last.includes(document.getElementById('themName').value || 'Them')) {
-    if (state.them > 0) state.them--;
+  if (last.startsWith('+1')) {
+    if (last.includes(document.getElementById('usName').value || 'Us') && state.us > 0) state.us--;
+    else if (state.them > 0) state.them--;
   }
   log('Undo');
   save(); render();
+}
+
+function showTrueUp() {
+  document.getElementById('trueUs').value = state.us;
+  document.getElementById('trueThem').value = state.them;
+  document.getElementById('trueUpModal').style.display = 'flex';
+}
+function closeTrueUp() { document.getElementById('trueUpModal').style.display = 'none'; }
+function applyTrueUp() {
+  const u = Math.max(0, parseInt(document.getElementById('trueUs').value) || 0);
+  const t = Math.max(0, parseInt(document.getElementById('trueThem').value) || 0);
+  state.us = u;
+  state.them = t;
+  log('True up → ' + u + '-' + t);
+  save(); render();
+  closeTrueUp();
 }
 
 function endSet() {
