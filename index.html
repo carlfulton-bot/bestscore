@@ -313,7 +313,16 @@ function load() {
     'Help the club stay in the rally'
   ];
   const donateLink = document.getElementById('donateLink');
-  if (donateLink) donateLink.textContent = donateLines[Math.floor(Math.random() * donateLines.length)];
+  let lastDonate = -1;
+  function showDonate() {
+    if (!donateLink) return;
+    let i = Math.floor(Math.random() * donateLines.length);
+    if (donateLines.length > 1 && i === lastDonate) i = (i + 1) % donateLines.length;
+    lastDonate = i;
+    donateLink.textContent = donateLines[i];
+  }
+  showDonate();
+  setInterval(showDonate, 120000);
 }
 
 function teamName(id, fallback) {
@@ -476,7 +485,7 @@ function flashNames() {
   }, 1400);
 }
 setTimeout(flashNames, 800);
-setInterval(flashNames, 5600);
+setTimeout(flashNames, 4200);
 
 load();
 </script>
