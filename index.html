@@ -242,7 +242,7 @@
     <button class="btn sm" onclick="reset()">Reset</button>
   </div>
 
-  <div class="donate-wrap"><a class="donate" href="https://buy.stripe.com/dRm3cv6XE28Xe7f5iieZ201" target="_blank" rel="noopener">Donate to ad-free site</a></div>
+  <div class="donate-wrap"><a class="donate" id="donateLink" href="https://buy.stripe.com/dRm3cv6XE28Xe7f5iieZ201" target="_blank" rel="noopener">Serve up a donation</a></div>
 
   <div class="history" id="history"></div>
 
@@ -298,6 +298,22 @@ function load() {
     if (s.themName) document.getElementById('themName').value = s.themName;
   } catch {}
   render();
+  const donateLines = [
+    'Serve up a donation',
+    'Bump the club a couple bucks',
+    'Set us up with a few bucks',
+    'Spike a little love our way',
+    'Dig deep for the club family',
+    'Ace a couple bucks to the club',
+    'Pass the club a few bucks',
+    'One more set for the club',
+    'Tip one over for the club',
+    'Float us a couple bucks',
+    'Bump, set, donate',
+    'Help the club stay in the rally'
+  ];
+  const donateLink = document.getElementById('donateLink');
+  if (donateLink) donateLink.textContent = donateLines[Math.floor(Math.random() * donateLines.length)];
 }
 
 function save() {
