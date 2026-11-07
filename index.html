@@ -146,6 +146,8 @@
   }
   .history div { padding: 3px 0; border-bottom: 1px solid #1e3a5f; }
   .history div:last-child { border: none; }
+  .day-label { margin-top: 16px; font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--dim); }
+  .disclaimer { margin-top: 16px; color: var(--dim); font-size: 0.75rem; line-height: 1.4; }
 
   .footer { display: flex; gap: 8px; margin-top: 16px; }
   .footer .btn { flex: 1; font-size: 0.85rem; padding: 12px; }
@@ -245,6 +247,9 @@
   <div class="donate-wrap"><a class="donate" id="donateLink" href="https://buy.stripe.com/dRm3cv6XE28Xe7f5iieZ201" target="_blank" rel="noopener">Serve up a donation</a></div>
 
   <div class="history" id="history"></div>
+  <div class="day-label">Today’s matches</div>
+  <div class="history" id="matches"></div>
+  <p class="disclaimer">Scores and today’s match list stay in this browser on this device only. They can be lost if you clear website data, use a private window, or switch phones or browsers. BestScore is a free scorekeeping tool. It does not guarantee that a score was recorded, and it is not responsible for a lost score or for decisions made from the score.</p>
 
   <div class="modal-bg" id="modal">
     <div class="modal">
@@ -254,15 +259,6 @@
         <button class="btn sm" onclick="closeModal()">Cancel</button>
         <button class="btn sm us" id="modalOk">OK</button>
       </div>
-    </div>
-  </div>
-
-  <div class="modal-bg" id="resultModal">
-    <div class="modal" id="resultCard">
-      <h3 id="resultTitle">Match over</h3>
-      <div class="result-name" id="resultName"></div>
-      <p class="result-sets" id="resultSets"></p>
-      <button class="btn sm" onclick="closeResult()">Done</button>
     </div>
   </div>
 
@@ -287,8 +283,17 @@
 
 <script>
 const state = {
-  us: 0, them: 0, usSets: 0, themSets: 0, history: []
+  us: 0, them: 0, usSets: 0, themSets: 0, history: [], matches: []
 };
+
+function todayKey() {
+  const d = new Date();
+  return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&', '<': '<', '>': '>', '"': '"', "'": '&#39;' }[c]));
+}
 
 function load() {
   try {
@@ -297,6 +302,9 @@ function load() {
     if (s.usName) document.getElementById('usName').value = s.usName;
     if (s.themName) document.getElementById('themName').value = s.themName;
   } catch {}
+  if (!Array.isArray(state.matches)) state.matches = [];
+  const today = todayKey();
+  state.matches = state.matches.filter(m => m && m.day === today);
   render();
   const donateLines = [
     'Serve up a donation',
@@ -347,7 +355,17 @@ function render() {
   document.getElementById('usSets').textContent = state.usSets + ' set' + (state.usSets !== 1 ? 's' : '');
   document.getElementById('themSets').textContent = state.themSets + ' set' + (state.themSets !== 1 ? 's' : '');
   const h = document.getElementById('history');
-  h.innerHTML = state.history.slice().reverse().map(x => '<div>' + x + '</div>').join('') || '<div>No points yet</div>';
+  h.innerHTML = state.history.slice().reverse().map(x => '<div>' + esc(x) + '</div>').join('') || '<div>No points yet</div>';
+  const list = (state.matches || []).filter(m => m && m.day === todayKey());
+  const box = document.getElementById('matches');
+  box.innerHTML = list.length ? list.slice().reverse().map(m => {
+    const score = m.usSets + '–' + m.themSets;
+    let line;
+    if (m.usSets > m.themSets) line = esc(m.us) + ' def. ' + esc(m.them);
+    else if (m.themSets > m.usSets) line = esc(m.them) + ' def. ' + esc(m.us);
+    else line = esc(m.us) + ' tied ' + esc(m.them);
+    return '<div>' + esc(m.time) + ' · ' + line + ' · ' + score + '</div>';
+  }).join('') : '<div>No matches yet today</div>';
 }
 
 function log(msg) {
@@ -406,46 +424,35 @@ function endSet() {
 }
 
 function endMatch() {
-  showModal('End Match', 'Finish match and show the result?', () => {
+  showModal('End Match', 'Finish this match and add it to today?', () => {
     const usName = teamName('usName', 'Us');
     const themName = teamName('themName', 'Them');
     let usSets = state.usSets;
     let themSets = state.themSets;
     if (state.us > state.them) usSets++;
     else if (state.them > state.us) themSets++;
-    const card = document.getElementById('resultCard');
-    card.classList.remove('win', 'loss');
-    const title = document.getElementById('resultTitle');
-    const name = document.getElementById('resultName');
-    const sets = document.getElementById('resultSets');
-    name.textContent = themName;
-    sets.textContent = usSets + '–' + themSets;
-    if (usSets > themSets) {
-      card.classList.add('win');
-      title.textContent = usName + ' won';
-    } else if (themSets > usSets) {
-      card.classList.add('loss');
-      title.textContent = themName + ' won';
-    } else {
-      title.textContent = 'Match tied';
+    if (!Array.isArray(state.matches)) state.matches = [];
+    if (usSets || themSets || state.us || state.them) {
+      state.matches.push({
+        day: todayKey(),
+        time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
+        us: usName,
+        them: themName,
+        usSets: usSets,
+        themSets: themSets
+      });
     }
-    log('Match ended · ' + usSets + '-' + themSets);
     state.us = state.them = state.usSets = state.themSets = 0;
     state.history = [];
     save(); render(); closeModal();
-    document.getElementById('resultModal').style.display = 'flex';
   });
 }
 
-function closeResult() {
-  document.getElementById('resultModal').style.display = 'none';
-}
-
 function reset() {
-  showModal('Reset', 'Clear everything?', () => {
-    Object.assign(state, { us:0, them:0, usSets:0, themSets:0, history:[] });
-    localStorage.removeItem('bestscore');
-    render(); closeModal();
+  showModal('Reset', 'Clear this game? Today’s matches stay.', () => {
+    const matches = state.matches || [];
+    Object.assign(state, { us: 0, them: 0, usSets: 0, themSets: 0, history: [], matches: matches });
+    save(); render(); closeModal();
   });
 }
 
