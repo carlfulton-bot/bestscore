@@ -69,19 +69,29 @@
     line-height: 48px;
   }
   .panel {
+    width: 100%;
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 16px;
-    min-height: 148px;
-    padding: 16px 8px 14px;
+    border-radius: 18px;
+    min-height: 240px;
+    padding: 20px 8px 18px;
     text-align: center;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    cursor: pointer;
+    color: inherit;
+    font: inherit;
+    -webkit-appearance: none;
+    appearance: none;
+    touch-action: manipulation;
   }
-  .side .name { font-size: 0.8rem; color: var(--dim); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .score { font-size: 3.6rem; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+  .panel.us { border-color: #166534; background: #0d2418; }
+  .panel.them { border-color: #9f1239; background: #2a1018; }
+  .panel:active { transform: scale(0.98); }
+  .side .name { font-size: 0.85rem; color: var(--dim); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .score { font-size: 5.4rem; font-weight: 800; line-height: 0.9; font-variant-numeric: tabular-nums; }
   .us .score { color: var(--us); }
   .them .score { color: var(--them); }
   .sets { font-size: 0.85rem; color: var(--dim); margin-top: 6px; }
@@ -145,21 +155,19 @@
   <div class="match">
     <div class="col us">
       <input id="usName" value="Us" placeholder="Our team" autocomplete="off" enterkeyhint="done">
-      <div class="panel side us">
+      <button type="button" class="panel side us" onclick="point('us')" aria-label="Add a point for us">
         <div class="name" id="usLabel">Us</div>
         <div class="score" id="usScore">0</div>
         <div class="sets" id="usSets">0 sets</div>
-      </div>
-      <button class="btn us" onclick="point('us')">+1 Us</button>
+      </button>
     </div>
     <div class="col them">
       <input id="themName" value="Them" placeholder="Opponent" autocomplete="off" enterkeyhint="done">
-      <div class="panel side them">
+      <button type="button" class="panel side them" onclick="point('them')" aria-label="Add a point for them">
         <div class="name" id="themLabel">Them</div>
         <div class="score" id="themScore">0</div>
         <div class="sets" id="themSets">0 sets</div>
-      </div>
-      <button class="btn them" onclick="point('them')">+1 Them</button>
+      </button>
     </div>
   </div>
 
