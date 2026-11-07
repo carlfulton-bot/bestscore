@@ -316,15 +316,21 @@ function load() {
   if (donateLink) donateLink.textContent = donateLines[Math.floor(Math.random() * donateLines.length)];
 }
 
+function teamName(id, fallback) {
+  const v = (document.getElementById(id).value || '').trim();
+  if (!v || v === '*Click to Change*') return fallback;
+  return v;
+}
+
 function save() {
-  state.usName = document.getElementById('usName').value || 'Us';
-  state.themName = document.getElementById('themName').value || 'Them';
+  state.usName = teamName('usName', 'Us');
+  state.themName = teamName('themName', 'Them');
   localStorage.setItem('bestscore', JSON.stringify(state));
 }
 
 function render() {
-  const us = document.getElementById('usName').value || 'Us';
-  const them = document.getElementById('themName').value || 'Them';
+  const us = teamName('usName', 'Us');
+  const them = teamName('themName', 'Them');
   document.getElementById('usLabel').textContent = us;
   document.getElementById('themLabel').textContent = them;
   document.getElementById('usScore').textContent = state.us;
@@ -343,10 +349,10 @@ function log(msg) {
 function point(side) {
   if (side === 'us') {
     state.us++;
-    log('+1 ' + (document.getElementById('usName').value || 'Us') + ' → ' + state.us + '-' + state.them);
+    log('+1 ' + teamName('usName', 'Us') + ' → ' + state.us + '-' + state.them);
   } else {
     state.them++;
-    log('+1 ' + (document.getElementById('themName').value || 'Them') + ' → ' + state.us + '-' + state.them);
+    log('+1 ' + teamName('themName', 'Them') + ' → ' + state.us + '-' + state.them);
   }
   save(); render();
 }
@@ -355,7 +361,7 @@ function undo() {
   if (!state.history.length) return;
   const last = state.history.pop();
   if (last.startsWith('+1')) {
-    if (last.includes(document.getElementById('usName').value || 'Us') && state.us > 0) state.us--;
+    if (last.includes(teamName('usName', 'Us')) && state.us > 0) state.us--;
     else if (state.them > 0) state.them--;
   }
   log('Undo');
@@ -363,8 +369,8 @@ function undo() {
 }
 
 function showTrueUp() {
-  document.getElementById('trueUsLabel').textContent = document.getElementById('usName').value || 'Us';
-  document.getElementById('trueThemLabel').textContent = document.getElementById('themName').value || 'Them';
+  document.getElementById('trueUsLabel').textContent = teamName('usName', 'Us');
+  document.getElementById('trueThemLabel').textContent = teamName('themName', 'Them');
   document.getElementById('trueUs').value = state.us;
   document.getElementById('trueThem').value = state.them;
   document.getElementById('trueUpModal').style.display = 'flex';
@@ -392,8 +398,8 @@ function endSet() {
 
 function endMatch() {
   showModal('End Match', 'Finish match and show the result?', () => {
-    const usName = document.getElementById('usName').value || 'Us';
-    const themName = document.getElementById('themName').value || 'Them';
+    const usName = teamName('usName', 'Us');
+    const themName = teamName('themName', 'Them');
     let usSets = state.usSets;
     let themSets = state.themSets;
     if (state.us > state.them) usSets++;
@@ -443,8 +449,34 @@ function showModal(title, text, ok) {
 function closeModal() { document.getElementById('modal').style.display = 'none'; }
 
 ['usName','themName'].forEach(id => {
-  document.getElementById(id).addEventListener('input', () => { save(); render(); });
+  const el = document.getElementById(id);
+  const fallback = id === 'usName' ? 'Us' : 'Them';
+  el.addEventListener('focus', () => {
+    if (el.value === '*Click to Change*') el.value = '';
+  });
+  el.addEventListener('blur', () => {
+    if (!el.value.trim() || el.value === '*Click to Change*') el.value = fallback;
+    save(); render();
+  });
+  el.addEventListener('input', () => { save(); render(); });
 });
+
+function flashNames() {
+  const hint = '*Click to Change*';
+  const fields = [
+    [document.getElementById('usName'), 'Us'],
+    [document.getElementById('themName'), 'Them']
+  ].filter(([el, fallback]) => document.activeElement !== el && el.value.trim() === fallback);
+  if (!fields.length) return;
+  fields.forEach(([el]) => { el.value = hint; });
+  setTimeout(() => {
+    fields.forEach(([el, fallback]) => {
+      if (el.value === hint && document.activeElement !== el) el.value = fallback;
+    });
+  }, 1400);
+}
+setTimeout(flashNames, 800);
+setInterval(flashNames, 5600);
 
 load();
 </script>
