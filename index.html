@@ -52,6 +52,10 @@
   .more { display: inline-block; margin-top: 6px; color: #3dd6c6; font-weight: 700; text-decoration: none; font-size: 0.95rem; }
   .donate-wrap { text-align: center; margin: 18px 0 4px; }
   .donate { color: #f0b429; font-weight: 700; text-decoration: none; font-size: 0.95rem; }
+  .result-name { font-size: 1.8rem; font-weight: 800; margin: 8px 0; line-height: 1.15; }
+  .result-sets { font-size: 1.35rem; font-weight: 800; color: var(--text); margin-bottom: 16px; }
+  .modal.win .result-name, .modal.win .result-sets { color: #22c55e; }
+  .modal.loss .result-name { color: #f43f5e; }
 
   .match {
     display: grid;
@@ -198,7 +202,7 @@
     <button class="btn sm" onclick="reset()">Reset</button>
   </div>
 
-  <div class="donate-wrap"><a class="donate" href="https://buy.stripe.com/dRm3cv6XE28Xe7f5iieZ201" target="_blank" rel="noopener">Donate</a></div>
+  <div class="donate-wrap"><a class="donate" href="https://buy.stripe.com/dRm3cv6XE28Xe7f5iieZ201" target="_blank" rel="noopener">Donate to ad-free site</a></div>
 
   <div class="history" id="history"></div>
 
@@ -210,6 +214,15 @@
         <button class="btn sm" onclick="closeModal()">Cancel</button>
         <button class="btn sm us" id="modalOk">OK</button>
       </div>
+    </div>
+  </div>
+
+  <div class="modal-bg" id="resultModal">
+    <div class="modal" id="resultCard">
+      <h3 id="resultTitle">Match over</h3>
+      <div class="result-name" id="resultName"></div>
+      <p class="result-sets" id="resultSets"></p>
+      <button class="btn sm" onclick="closeResult()">Done</button>
     </div>
   </div>
 
@@ -316,12 +329,39 @@ function endSet() {
 }
 
 function endMatch() {
-  showModal('End Match', 'Finish match and clear scores?', () => {
-    log('Match ended · Sets ' + state.usSets + '-' + state.themSets);
+  showModal('End Match', 'Finish match and show the result?', () => {
+    const usName = document.getElementById('usName').value || 'Us';
+    const themName = document.getElementById('themName').value || 'Them';
+    let usSets = state.usSets;
+    let themSets = state.themSets;
+    if (state.us > state.them) usSets++;
+    else if (state.them > state.us) themSets++;
+    const card = document.getElementById('resultCard');
+    card.classList.remove('win', 'loss');
+    const title = document.getElementById('resultTitle');
+    const name = document.getElementById('resultName');
+    const sets = document.getElementById('resultSets');
+    name.textContent = themName;
+    sets.textContent = usSets + '–' + themSets;
+    if (usSets > themSets) {
+      card.classList.add('win');
+      title.textContent = usName + ' won';
+    } else if (themSets > usSets) {
+      card.classList.add('loss');
+      title.textContent = themName + ' won';
+    } else {
+      title.textContent = 'Match tied';
+    }
+    log('Match ended · ' + usSets + '-' + themSets);
     state.us = state.them = state.usSets = state.themSets = 0;
     state.history = [];
     save(); render(); closeModal();
+    document.getElementById('resultModal').style.display = 'flex';
   });
+}
+
+function closeResult() {
+  document.getElementById('resultModal').style.display = 'none';
 }
 
 function reset() {
